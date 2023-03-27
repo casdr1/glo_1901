@@ -76,27 +76,32 @@ def formater_jeu(état):
 
 
 def formater_les_parties(parties):
-    """Formater une liste de parties
-    L'ordre rester exactement la même que ce qui est passé en paramètre.
-
-    Args:
-        parties (list): Liste des parties
-
-    Returns:
-        str: Représentation des parties
-    """
+    parties_format = []
+    for i, partie in enumerate(parties):
+        id_partie = i + 1
+        date = partie["date"]
+        joueurs = ' vs '.join(partie['joueurs'])
+        gagnant = partie['gagnant'] or 'en cours'
+        partie_format = f"{id_partie}: {date}, {joueurs}, gagnant: {gagnant}"
+        parties_format.append(partie_format)
+    return '\n...\n'.join(parties_format)
+    
     pass
 
 
 def récupérer_le_coup():
-    """Récupérer le coup
+    typeshot = input("Quel type de coup voulez-vous jouer? ('D', 'MH'. 'MV'): ")
+    while typeshot not in ['D', 'MH', 'MV']:
+        typeshot = input("Coup invalide. Quel type de coup voulez-vous jouer? ('D', 'MH', 'MV'): ")
+    
+    pos_str = input("Entrez la position où vous souhaitez appliquer le coup (x,y): ")
+    pos_liste = pos_str.split(',')
+    while pos_liste[0].isdigit or pos_liste[1].isdigit() is False:
+        pos_str = input('Position non valide, entrez une position (x,y) valide: ')
+        pos_liste = pos_str.split(',')
+    
+    position = [int(pos_liste[0]), int(pos_liste[1])]
+    
+    return typeshot, position
 
-    Returns:
-        tuple: Un tuple composé d'un type de coup et de la position.
-               Le type de coup est une chaîne de caractères.
-               La position est une liste de 2 entier [x, y].
-    Examples:
-        Quel type de coup voulez-vous jouer? ('D', 'MH', 'MV'):
-        Donnez la position où appliquer ce coup (x,y): 2,6
-    """
     pass

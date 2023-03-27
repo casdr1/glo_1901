@@ -12,32 +12,15 @@ import argparse
 
 
 def analyser_commande():
-    """Génère un interpréteur de commande.
-
-    Returns:
-        Namespace: Un objet Namespace tel que retourné par parser.parse_args().
-                   Cette objet aura l'attribut «idul» représentant l'idul du joueur
-                   et l'attribut «parties» qui est un booléen True/False.
-    """
+   
     parser = argparse.ArgumentParser(prog="main.py", usage="%(prog)s [-h] [-p] idul", description="Quoridor - jeu du TP")
     parser.add_argument("idul", metavar="idul_du_joueur", help="l'idul du joueur")
     parser.add_argument("-p", "--parties", action="store_true", help="Liste des parties existantes" )
-   
-    # Complétez le code ici
-    # vous pourriez aussi avoir à ajouter des arguments dans ArgumentParser(...)
-
     return parser.parse_args()
 
 
 def formater_légende(joueurs):
-    """Formater la représentation graphique de la légende.
-
-    Args:
-        joueurs (list): Liste de dictionnaires représentant les joueurs.
-
-    Returns:
-        str: Chaîne de caractères représentant la légende.
-    """
+    
     légende = 'Légende:\n'
     for i, joueur in enumerate(joueurs):
         nom = joueur['nom']
@@ -48,31 +31,47 @@ def formater_légende(joueurs):
 
 
 def formater_damier(joueurs, murs):
-    """Formater la représentation graphique du damier.
+   
+    damier = [['.' for _ in range(9)] for _ in range(9)]
+    for i in joueurs:
+        x, y = i['pos']
+        num_joueur = int(i['nom'][-1])
+        damier[8-y][x-1] = str(num_joueur)
+    
+    for mur_hrz in murs['horizontaux']:
+        x, y = mur_hrz
+        damier[8-y][x-1] = '-'
+        damier[8-y][x] = '-'
+    
+    for mur_vrt in murs['verticaux']:
+        x, y = mur_vrt
+        damier[8-y-1][x-1] = '|'
+        damier[8-y][x-1] = '|'
 
-    Args:
-        joueurs (list): Liste de dictionnaires représentant les joueurs.
-        murs (dict): Dictionnaire représentant l'emplacement des murs.
+    chaine_damier = '| 1   2   3   4   5   6   7   8   9 |\n'
+    chaine_damier += '--|'+'-'*36 + '|\n'
+    for i, ligne in enumerate(damier):
+        num_ligne = 9 - i
+        chaine_ligne = f"{num_ligne} | {'   '.join(ligne)} | {num_ligne}\n"
+        if num_ligne == 5:
+            chaine_ligne += '  |' + '-'*11 + '    ' + '-'*11 + '|\n'
+        chaine_damier += chaine_ligne
+    chaine_damier += '--|'+'-'*36 + '|\n'
+    chaine_damier += '| 1   2   3   4   5   6   7   8   9 |\n'
 
-    Returns:
-        str: Chaîne de caractères représentant le damier.
-    """
-    damier = ['.' for _ in range(9)]
+    return chaine_damier
     
     pass
 
 
 def formater_jeu(état):
-    """Formater la représentation graphique d'un jeu.
+    damier = formater_damier(état['murs'], état['joueurs'])
+    légende = formater_légende(état['joueurs'])
+    plateau = ''
+    for i, ligne in enumerate(damier):
+        plateau += ligne + '\t' + légende[i] + '\n'
+    return plateau
 
-    Doit faire usage des fonctions formater_légende et formater_damier.
-
-    Args:
-        état (dict): Dictionnaire représentant l'état du jeu.
-
-    Returns:
-        str: Chaîne de caractères représentant le jeu.
-    """
     pass
 
 

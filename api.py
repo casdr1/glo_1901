@@ -1,102 +1,71 @@
-"""Module d'API du jeu Quoridor
 
-Attributes:
-    URL (str): Constante représentant le début de l'url du serveur de jeu.
-
-Functions:
-    * lister_parties - Récupérer la liste des parties reçus du serveur.
-    * débuter_partie - Créer une nouvelle partie et retourne l'état de cette dernière.
-    * récupérer_partie - Retrouver l'état d'une partie spécifique.
-    * jouer_coup - Exécute un coup et retourne le nouvel état de jeu.
-"""
 
 import requests
+
 
 URL = "https://pax.ulaval.ca/quoridor/api/v2/"
 
 
 def lister_parties(idul, secret):
-    """Lister les parties
-
-    Args:
-        idul (str): idul du joueur
-        secret (str): secret récupérer depuis le site de PAX
-
-    Raises:
-        PermissionError: Erreur levée lorsque le serveur retourne un code 401.
-        RuntimeError: Erreur levée lorsque le serveur retourne un code 406.
-        ConnectionError: Erreur levée lorsque le serveur retourne un code autre que 200, 401 ou 406
-
-    Returns:
-        list: Liste des parties reçues du serveur,
-             après avoir décodé le json de sa réponse.
-    """
+    url = f"https://pax.ulaval.ca/quoridor/api/lister/"
+    response = requests.get(url, params={"idul": idul, "secret": secret})
+    
+    if response.status_code == 200:
+        return response.json()
+    
+    elif response.status_code == 401:
+        raise PermissionError(response.json()["message"])
+    
+    elif response.status_code == 406:
+        raise RuntimeError(response.json()["message"])
+    
+    else:
+        raise ConnectionError
     pass
 
 
 def débuter_partie(idul, secret):
-    """Débuter une partie
-
-    Args:
-        idul (str): idul du joueur
-        secret (str): secret récupérer depuis le site de PAX
-
-    Raises:
-        PermissionError: Erreur levée lorsque le serveur retourne un code 401.
-        RuntimeError: Erreur levée lorsque le serveur retourne un code 406.
-        ConnectionError: Erreur levée lorsque le serveur retourne un code autre que 200, 401 ou 406
-
-    Returns:
-        tuple: Tuple constitué de l'identifiant de la partie en cours
-            et de l'état courant du jeu, après avoir décodé
-            le JSON de sa réponse.
-    """
+    url_base = 'https://python.gel.ulaval.ca/quoridor/api/'
+    rep = requests.post(url_base+'sessions/', json={'idul': idul})
+    if rep.status_code == 200:
+        rep = rep.json()
+        id_partie = rep['id']
+        etat_partie = rep['état']
+        return (id_partie, etat_partie)
+    elif rep.status_code == 401:
+        raise PermissionError(rep.json()['message'])
+    else:
+        raise RuntimeError(rep.json()['message'])
     pass
 
 
 def récupérer_partie(id_partie, idul, secret):
-    """Récupérer une partie
-
-    Args:
-        id_partie (str): identifiant de la partie à récupérer
-        idul (str): idul du joueur
-        secret (str): secret récupérer depuis le site de PAX
-
-    Raises:
-        PermissionError: Erreur levée lorsque le serveur retourne un code 401.
-        RuntimeError: Erreur levée lorsque le serveur retourne un code 406.
-        ConnectionError: Erreur levée lorsque le serveur retourne un code autre que 200, 401 ou 406
-
-    Returns:
-        tuple: Tuple constitué de l'identifiant de la partie en cours
-            et de l'état courant du jeu, après avoir décodé
-            le JSON de sa réponse.
-    """
+    url = f"https://pax.ulaval.ca/quoridor/api/partie/{id_partie}"
+    headers = {'Authorization': f'Bearer {secret}'}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        partie = response.json()
+        return (partie['id'], partie['état'], partie['gagnant'])
+    
+    elif response.status_code == 401:
+        raise PermissionError(response.json()['message'])
+    
+    elif response.status_code == 406:
+        raise RuntimeError(response.json()['message'])
+    
+    else:
+        raise ConnectionError()
     pass
 
 
 def jouer_coup(id_partie, type_coup, position, idul, secret):
-    """Jouer un coup
-
-    Args:
-        id_partie (str): Identifiant de la partie.
-        type_coup (str): Type de coup du joueur :
-                            'D' pour déplacer le jeton,
-                            'MH' pour placer un mur horizontal,
-                            'MV' pour placer un mur vertical;
-        position (list): La position [x, y] du coup.
-        idul (str): idul du joueur
-        secret (str): secret récupérer depuis le site de PAX
-
-    Raises:
-        StopIteration: Erreur levée lorsqu'il y a un gagnant dans la réponse du serveur.
-        PermissionError: Erreur levée lorsque le serveur retourne un code 401.
-        RuntimeError: Erreur levée lorsque le serveur retourne un code 406.
-        ConnectionError: Erreur levée lorsque le serveur retourne un code autre que 200, 401 ou 406
-
-    Returns:
-        tuple: Tuple constitué de l'identifiant de la partie en cours
-            et de l'état courant du jeu, après avoir décodé
-            le JSON de sa réponse.
-    """
+    rep = requests.put(URL+'jouer', auth=(idul, secret), json={'id': id_partie, 'type': type_coup, 'pos': position}).json()
+    if 'message' in rep:
+        if rep['message'].startswith('La partie est terminée'):
+            raise StopIteration(rep['gagnant'])
+        elif rep['message'] == 'Le coup est invalide':
+            raise RuntimeError(rep['message'])
+        else:
+            raise PermissionError(rep['message'])
+    return rep['id'], rep['état']
     pass
